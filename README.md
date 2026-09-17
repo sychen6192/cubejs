@@ -46,7 +46,8 @@ been rebuilt against that update yet, so no newer tag clears them.
 
 Distroless has no `perl`, no shell and no package manager, so those findings - and the
 advisories against npm's bundled dependencies - are absent by construction rather than
-patched away. It also makes the image smaller (477 MB vs 607 MB).
+patched away. It also makes the image smaller: the runtime base is 214 MB instead of 347 MB, and the
+finished image is 584 MB.
 
 Two practical consequences:
 
@@ -81,6 +82,15 @@ COPY --chown=65532:65532 model/ /cube/conf/model/
 ```
 
 The API listens on port 4000 and serves `/livez` and `/readyz` for health checks.
+
+On startup the server logs two warnings that are expected with this image:
+
+- `Unable to detect what host library is used as libc, continue with gnu` - distroless
+  has no `ldd` for the native loader to probe, so it falls back to glibc, which is the
+  variant that is vendored. The native module loads fine; the smoke test checks this.
+- `Cube Store is not found` - the embedded Cube Store is dev-mode only and is not
+  shipped. In production point `CUBEJS_CUBESTORE_HOST` at your Cube Store deployment,
+  exactly as with the official image.
 
 ## Tags
 
