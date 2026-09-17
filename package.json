@@ -1,0 +1,10 @@
+{
+  "name": "cube-server",
+  "private": true,
+  "dependencies": {
+    "@cubejs-backend/server": "1.7.40",
+    "@cubejs-backend/oracle-driver": "1.7.40",
+    "@cubejs-backend/mysql-driver": "1.7.40",
+    "oracledb": "6.10.0"
+  }
+}

@@ -1,0 +1,56 @@
+name: build-scan-publish
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  IMAGE: docker.io/sychen6192/cube
+  CUBE_VERSION: "1.7.40"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build image
+        run: |
+          docker build --pull --provenance=false \
+            --build-arg CUBE_VERSION="$CUBE_VERSION" \
+            --label "org.opencontainers.image.source=https://github.com/$GITHUB_REPOSITORY" \
+            --label "org.opencontainers.image.revision=$GITHUB_SHA" \
+            -t "$IMAGE:$CUBE_VERSION" .
+
+      - name: Scan with Trivy (fails on CRITICAL or blocked CVEs)
+        run: scripts/scan.sh "$IMAGE:$CUBE_VERSION" trivy.json
+
+      - name: Upload Trivy report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-report
+          path: trivy.json
+
+      - name: Smoke test
+        run: scripts/smoke.sh "$IMAGE:$CUBE_VERSION"
+
+      - name: Push to Docker Hub
+        if: github.event_name != 'pull_request'
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+          echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+          short="${GITHUB_SHA::7}"
+          docker tag "$IMAGE:$CUBE_VERSION" "$IMAGE:$CUBE_VERSION-$short"
+          docker tag "$IMAGE:$CUBE_VERSION" "$IMAGE:latest"
+          docker push "$IMAGE:$CUBE_VERSION"
+          docker push "$IMAGE:$CUBE_VERSION-$short"
+          docker push "$IMAGE:latest"
+          echo "Published digest:"
+          docker image inspect --format '{{index .RepoDigests 0}}' "$IMAGE:$CUBE_VERSION"
