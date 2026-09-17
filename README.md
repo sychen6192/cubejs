@@ -7,7 +7,7 @@ deployments, and it passes the corporate Harbor scan with **0 CRITICAL** finding
 Published as `docker.io/sychen6192/cubejs`.
 
 ```
-docker pull docker.io/sychen6192/cubejs:1.7.40
+docker pull docker.io/sychen6192/cubejs:v1.7.40
 ```
 
 ## Why this image exists
@@ -69,14 +69,14 @@ docker run --rm -p 4000:4000 \
   --env-file ./cube.env \
   -v "$PWD/cube.js:/cube/conf/cube.js:ro" \
   -v "$PWD/model:/cube/conf/model:ro" \
-  docker.io/sychen6192/cubejs:1.7.40
+  docker.io/sychen6192/cubejs:v1.7.40
 ```
 
 Or bake the config in. Note that `RUN` is unavailable in a derived image, because the
 base has no shell - copy files in and nothing else:
 
 ```dockerfile
-FROM docker.io/sychen6192/cubejs:1.7.40
+FROM docker.io/sychen6192/cubejs:v1.7.40
 COPY --chown=65532:65532 cube.js /cube/conf/cube.js
 COPY --chown=65532:65532 model/ /cube/conf/model/
 ```
@@ -96,9 +96,12 @@ On startup the server logs two warnings that are expected with this image:
 
 | Tag | Meaning |
 | --- | --- |
-| `1.7.40` | The Cube version. What deployments and corporate CI should pin. |
-| `1.7.40-<short sha>` | Immutable per-commit build, for rollback. |
+| `v1.7.40` | The Cube version. What deployments and corporate CI should pin. |
+| `v1.7.40-<short sha>` | Immutable per-commit build, for rollback. |
 | `latest` | Most recent successful build of the default branch. |
+
+Version tags carry a `v` prefix like the official `cubejs/cube` tags; the workflow
+derives them from `CUBE_VERSION`, so an upgrade changes one value.
 
 Tags are pushed only from the default branch. Pull request builds are built, scanned and
 smoke-tested but never pushed.
@@ -124,8 +127,8 @@ forgotten step 4 breaks the build rather than shipping a mismatched binary.
 ## Verifying
 
 ```
-scripts/scan.sh docker.io/sychen6192/cubejs:1.7.40   # 0 CRITICAL, blocked CVEs absent
-scripts/smoke.sh docker.io/sychen6192/cubejs:1.7.40  # prints SMOKE PASS
+scripts/scan.sh docker.io/sychen6192/cubejs:v1.7.40   # 0 CRITICAL, blocked CVEs absent
+scripts/smoke.sh docker.io/sychen6192/cubejs:v1.7.40  # prints SMOKE PASS
 ```
 
 `scripts/scan.sh` fails the build on any CRITICAL finding and on any of the three blocked
