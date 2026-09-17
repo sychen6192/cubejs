@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 env:
-  IMAGE: docker.io/sychen6192/cube
+  IMAGE: docker.io/sychen6192/cubejs
   CUBE_VERSION: "1.7.40"
 
 jobs:
